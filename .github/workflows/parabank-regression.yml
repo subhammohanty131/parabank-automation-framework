@@ -1,0 +1,132 @@
+name: ParaBank Hosted Regression (70 Tests)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: parabank-hosted-regression-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    env:
+      TZ: Asia/Kolkata
+
+    steps:
+      - name: Checkout automation framework
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Select Java 17
+        shell: bash
+        run: |
+          test -x "$JAVA_HOME_17_X64/bin/java"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch pinned ParaBank source
+        shell: bash
+        run: |
+          git init "$RUNNER_TEMP/parabank-source"
+
+          git -C "$RUNNER_TEMP/parabank-source" remote add origin \
+            https://github.com/parasoft/parabank.git
+
+          git -C "$RUNNER_TEMP/parabank-source" fetch --depth=1 origin \
+            cea469acea34a05e97b4c81a82cf8d736b489545
+
+          git -C "$RUNNER_TEMP/parabank-source" checkout --detach FETCH_HEAD
+
+          test "$(git -C "$RUNNER_TEMP/parabank-source" rev-parse HEAD)" \
+            = 'cea469acea34a05e97b4c81a82cf8d736b489545'
+
+      - name: Prepare isolated demo data
+        run: python3 ci/prepare_parabank.py
+
+      - name: Build pinned ParaBank application
+        shell: bash
+        run: |
+          mvn --batch-mode --no-transfer-progress \
+            -f "$RUNNER_TEMP/parabank-source/pom.xml" \
+            -Dmaven.test.skip=true package
+
+      - name: Start ParaBank and its embedded HSQLDB
+        run: bash ci/start_parabank.sh
+
+      - name: Execute 70 regression tests
+        shell: bash
+        run: |
+          xvfb-run --auto-servernum \
+            --server-args='-screen 0 1920x1080x24' \
+            mvn --batch-mode --no-transfer-progress \
+            clean test '-DsuiteFile=testng-all-regression.xml'
+
+      - name: Verify execution count
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          reports = list(
+              Path("target/surefire-reports").glob("TEST-*.xml")
+          )
+
+          totals = {
+              key: 0
+              for key in ("tests", "failures", "errors", "skipped")
+          }
+
+          for report in reports:
+              root = ET.parse(report).getroot()
+
+              for key in totals:
+                  totals[key] += int(root.get(key, "0"))
+
+          expected = {
+              "tests": 70,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0,
+          }
+
+          if totals != expected:
+              raise SystemExit(
+                  "Unexpected regression totals: " + str(totals)
+              )
+
+          print(
+              "Verified 70 tests, no failures, errors or skips."
+          )
+          PY
+
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: parabank-regression-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            test-output/
+            target/surefire-reports/
+            ${{ runner.temp }}/parabank-console.log
+            ${{ runner.temp }}/apache-tomcat-10.1.60/logs/
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Stop disposable Tomcat
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f "$RUNNER_TEMP/apache-tomcat-10.1.60/bin/catalina.sh" ]]; then
+            CATALINA_HOME="$RUNNER_TEMP/apache-tomcat-10.1.60" \
+            CATALINA_BASE="$RUNNER_TEMP/apache-tomcat-10.1.60" \
+              bash "$RUNNER_TEMP/apache-tomcat-10.1.60/bin/catalina.sh" \
+              stop || true
+          fi
