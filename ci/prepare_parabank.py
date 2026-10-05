@@ -36,9 +36,9 @@ for expected in required:
             "Unexpected seed configuration: " + expected
         )
 
-password = "".join(
+password = ''.join(
     secrets.choice(string.ascii_letters + string.digits)
-    for _ in range(24)
+    for _ in range(20)
 )
 
 # Generated demo-only credential; never use a personal password.
