@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<suite name="ParaBank Additional Coverage" thread-count="1">
+
+    <test name="Additional Banking Scenarios"
+          preserve-order="true">
+
+        <classes>
+
+            <class name="com.subham.parabank.tests.ApiDepositDatabaseValidationTest"/>
+
+            <class name="com.subham.parabank.tests.ApiWithdrawalDatabaseValidationTest"/>
+
+            <class name="com.subham.parabank.tests.BillPaymentDatabaseValidationTest"/>
+
+            <class name="com.subham.parabank.tests.SavingsAccountDatabaseValidationTest"/>
+
+            <class name="com.subham.parabank.tests.TransferBoundaryValidationTest"/>
+
+            <class name="com.subham.parabank.tests.LogoutSessionValidationTest"/>
+
+        </classes>
+
+    </test>
+
+</suite>

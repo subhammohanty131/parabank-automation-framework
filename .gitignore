@@ -1,0 +1,16 @@
+target/
+test-output/
+
+.settings/
+.classpath
+.project
+
+.idea/
+*.iml
+
+*.log
+.env
+
+src/main/resources/config.properties
+src/test/resources/config.properties
+*.bak
