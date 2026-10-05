@@ -1,184 +1,261 @@
 # ParaBank End-to-End Banking Test Automation Framework
 
-Java 17 automation project by Subham Mohanty using Selenium WebDriver,
-TestNG, Maven, REST Assured and JDBC against a local ParaBank application
-and HSQLDB database.
+[![Hosted Regression](https://github.com/subhammohanty131/parabank-automation-framework/actions/workflows/parabank-regression.yml/badge.svg?branch=main)](https://github.com/subhammohanty131/parabank-automation-framework/actions/workflows/parabank-regression.yml)
 
-## Verified Execution
+A banking automation portfolio project by Subham Mohanty using Java,
+Selenium WebDriver, TestNG, Maven, REST Assured and JDBC.
 
-On 5 October 2026, the combined TestNG regression suite executed:
+The framework checks banking behavior and financial data across the
+ParaBank UI, REST API and HSQLDB database where applicable.
 
-- Tests: 70
-- Passed: 70
-- Failed: 0
-- Skipped: 0
+## Verified Results
 
-All six loan scenarios passed within the combined run.
+On 6 October 2026, GitHub-hosted regression run #4 completed successfully:
 
-A separate rejection-contract suite executed:
+| Metric | Result |
+|---|---:|
+| Tests executed | 70 |
+| Passed | 70 |
+| Failures | 0 |
+| Errors | 0 |
+| Skipped | 0 |
+| Configuration failures | 0 |
+| Workflow duration | 7 minutes 47 seconds |
 
-- Tests: 19
-- Passed: 4
-- Failed: 15
-- Skipped: 0
+Verified framework commit: `83c88ed`.
 
-These rejection findings are documented in
-[KNOWN_DEFECTS.md](docs/KNOWN_DEFECTS.md).
+[View the verified CI run](https://github.com/subhammohanty131/parabank-automation-framework/actions/runs/37379770919)
 
-Execution results are snapshots. They do not establish that every
-application scenario is covered or that known defects are resolved.
+The uploaded artifact contains the HTML report, Maven test results,
+known-defect screenshot evidence and server logs.
 
-An earlier UI loan approval timeout passed on both a standalone rerun
-and the combined regression rerun. Its cause remains unconfirmed.
+The same 70-test regression suite also passed locally.
+
+These results describe specific executions. They do not establish
+complete application coverage or resolution of known defects.
 
 ## Technology Stack
 
 - Java 17
-- Selenium WebDriver
-- TestNG
-- Maven
-- REST Assured
-- JDBC
-- HSQLDB
-- Apache Tomcat
-- Screenshot evidence and custom HTML reporting
+- Selenium WebDriver 4.35.0
+- TestNG 7.11.0
+- Maven and Maven Surefire
+- REST Assured 6.0.1
+- JDBC and HSQLDB 2.7.4
+- Apache Tomcat 10.1.60
+- GitHub Actions
+- Failure screenshots and custom HTML reporting
 
-## Functional Coverage
+## Coverage
 
-- Registration and duplicate-username validation
-- Successful and unsuccessful login
-- Logout and session validation
+- Customer registration and duplicate-username validation
+- Successful login, failed login, logout and session checks
 - Profile updates and required-field validation
-- Checking and savings account creation
+- Checking and savings account creation variations
 - Opening deposits and funding-account balance changes
 - Fund transfers and boundary amounts
-- Deposits and withdrawals
+- API deposits and withdrawals
 - Bill payments and field-validation errors
-- Transaction history
+- Transaction history and transaction details
 - Transaction searches by ID, amount, date and date range
-- UI and API loan approvals and denials
-- API error and financial rejection contracts
+- UI and API loan approvals, threshold approval and denials
+- UI, API and database balance comparisons
+- Invalid transfer data-integrity checks
 
-Balances, account ownership, account types and transactions are checked
-through UI, API and JDBC where applicable to each scenario.
-Not every test exercises all three layers.
+A separate suite checks stricter API error and financial rejection
+contracts. Not every test uses all three validation layers.
 
-## Prerequisites
+## Project Structure
 
-- Java 17
+| Location | Purpose |
+|---|---|
+| `src/main/java/.../base` | Browser lifecycle |
+| `src/main/java/.../pages` | Selenium page objects |
+| `src/main/java/.../database` | JDBC queries |
+| `src/main/java/.../utils` | Configuration and screenshots |
+| `src/test/java/.../api` | API clients and validation |
+| `src/test/java/.../tests` | Core banking tests |
+| `src/test/java/.../expanded` | Expanded functional coverage |
+| `src/test/java/.../contracts` | Strict rejection contracts |
+| `src/test/java/.../listeners` | Screenshots and HTML reporting |
+| `ci/` | Disposable CI environment preparation |
+| `.github/workflows/` | GitHub Actions workflows |
+| `docs/KNOWN_DEFECTS.md` | Documented findings |
+
+## Local Setup
+
+Required:
+
+- Java 17 selected for Maven and Tomcat
 - Maven
 - Google Chrome
-- Tomcat 10.1.60
-- ParaBank deployed at http://localhost:8081/parabank/
-- HSQLDB listening on port 9001
+- ParaBank deployed on Tomcat 10.1.60
+- Application URL: `http://localhost:8081/parabank/`
+- HSQLDB available on port 9001
 
-The current JDBC implementation uses:
+The current JDBC connection is:
 
-- URL: jdbc:hsqldb:hsql://localhost/parabank
-- Username: sa
-- Password: empty
+```text
+URL: jdbc:hsqldb:hsql://localhost/parabank
+Username: sa
+Password: empty
+```
 
-These settings are intended for the local demo environment.
+These connection settings are for the disposable demo environment.
 
-## Configuration
+Copy the example configuration:
 
-Copy:
+```powershell
+Copy-Item src/test/resources/config.example.properties src/test/resources/config.properties
+```
 
-src/test/resources/config.example.properties
+Enter the local demo customer's password in `config.properties`.
 
-to:
+Core tests require:
 
-src/test/resources/config.properties
+- Customer username: `Selenium_User_01`
+- Account `13566`: checking
+- Account `13677`: savings
+- Both accounts owned by the configured customer
+- Sufficient funds for transfers and account-opening deposits
 
-Enter the local test password.
+Expanded tests create isolated customers for their scenarios.
 
-The existing tests require customer Selenium_User_01 and accounts
-13566 and 13677.
+Loan tests require these application parameters:
 
-The loan suite currently requires these application parameters:
+```properties
+loanProcessor=funds
+loanProcessorThreshold=20
+```
 
-- loanProcessor=funds
-- loanProcessorThreshold=20
+Start the application and its HSQLDB server before running local tests.
+Opening ParaBank's home page initializes a fresh database.
 
-Start Tomcat and HSQLDB before execution.
+Tests read balances dynamically rather than assuming previous-run values.
 
-Tests read current balances dynamically. Previous-run balances should
-not be used as fixed expected values.
+## Run Tests
 
-## Execution
+Run commands from the automation project's root.
 
-Run commands from the project root.
+Complete regression, currently 70 tests:
 
-### Complete Regression: 70 Tests
+```powershell
+mvn clean test
+```
 
-    mvn clean test
+Expanded coverage, currently 55 tests:
 
-### Expanded Coverage: 55 Tests
+```powershell
+mvn test "-DsuiteFile=testng-expanded.xml"
+```
 
-    mvn test "-DsuiteFile=testng-expanded.xml"
+Core banking coverage, currently 15 tests:
 
-### Rejection Contracts: 19 Tests
+```powershell
+mvn test "-DsuiteFile=testng.xml"
+```
 
-    mvn test "-DsuiteFile=testng-rejection-contracts.xml"
+Strict rejection contracts, currently 19 tests:
 
-Rejection failures retain a failed build status.
-No automatic retry or failure-ignore setting is configured.
+```powershell
+mvn test "-DsuiteFile=testng-rejection-contracts.xml"
+```
 
-Execution is sequential because the current driver factory is static.
+In Eclipse, right-click the relevant suite XML and select
+**Run As → TestNG Suite**.
 
-In Eclipse, right-click the suite XML and select:
+Execution is sequential. The current static driver factory does not
+support parallel test execution.
 
-Run As > TestNG Suite
+## Reports and Screenshots
 
-## Reports
+The custom report is written to TestNG's output directory:
 
-Custom HTML report:
+| Execution | Custom report location |
+|---|---|
+| Eclipse TestNG, default output | `test-output/parabank-report.html` |
+| Maven Surefire | `target/surefire-reports/parabank-report.html` |
 
-test-output/parabank-report.html
+Maven XML and text results are under `target/surefire-reports/`.
 
-Maven reports:
+Screenshots are saved under `test-output/screenshots/`.
+The custom report copies attached screenshots into its accompanying
+`evidence/` directory.
 
-target/surefire-reports/
+Preserve the report and its evidence directory together.
+Archive important results before another execution overwrites them.
 
-Failure screenshots and evidence are stored under test-output.
+## GitHub-Hosted CI
 
-Preserve the accompanying evidence and screenshot folders when copying
-the HTML report. The next execution overwrites the report, so archive
-important results.
+Two workflows are configured:
 
-## Test Data
+| Workflow | Trigger | Purpose |
+|---|---|---|
+| ParaBank Build Check (Tests Not Run) | Push to main or manual | Compile application and test sources |
+| ParaBank Hosted Regression (70 Tests) | Manual | Prepare ParaBank and execute full regression |
 
-Tests create customers and accounts and perform financial transactions.
+To run regression:
 
-Regular runs consume funding from the configured demo customer.
-Replenish funds when required.
+1. Open the repository's Actions tab.
+2. Select **ParaBank Hosted Regression (70 Tests)**.
+3. Click **Run workflow**.
+4. Select `main` and start the run.
+5. Download the evidence artifact from the completed run.
 
-Rejection tests use generated customers and may leave negative balances
-or invalid transactions when the application accepts invalid requests.
+The regression workflow:
 
-Use a disposable local demo database.
+- Uses a GitHub-hosted Ubuntu runner and Java 17.
+- Fetches ParaBank source at commit
+  `cea469acea34a05e97b4c81a82cf8d736b489545`.
+- Generates a temporary demo password and seeds two funded accounts.
+- Builds ParaBank and verifies the downloaded Tomcat archive checksum.
+- Starts Tomcat and embedded HSQLDB on the runner.
+- Opens the home page to initialize the fresh database.
+- Runs Selenium through an Xvfb virtual display.
+- Requires exactly 70 tests with no failures, errors or skips.
+- Uploads reports, screenshot evidence and server logs.
+- Stops the disposable Tomcat instance.
 
-## Continuous Integration
+Artifacts are retained for seven days.
 
-The workflow at:
+This workflow runs independently of the developer's computer.
+No local runner, tunnel or personal application password is required.
+Application and database services bind to the runner's loopback interface.
 
-.github/workflows/parabank-regression.yml
+Workflow permissions are limited to repository read access.
+Third-party GitHub Actions are pinned to full commit SHAs.
+Generated `config.properties` is not included in the artifact.
 
-is manually triggered and requires a Windows self-hosted runner on the
-computer hosting ParaBank and HSQLDB.
+## Known Defects and Rejection Contracts
 
-Required custom runner label:
+See [Known Defects](docs/KNOWN_DEFECTS.md).
 
-parabank-local
+A separate local rejection-contract execution recorded:
 
-Run the runner interactively for the existing headed Chrome setup.
+- 19 tests
+- 4 passed
+- 15 failed
+- 0 skipped
 
-Set PARABANK_CONFIG_FILE to the absolute path of a local config.properties
-file outside the repository checkout.
+These are test results, not a count of independent defects.
+Some rejection expectations require clarification of application policy.
 
-The workflow checks prerequisites, runs the regression suite and uploads
-reports. It does not install or start ParaBank or HSQLDB.
+The strict rejection suite is excluded from the default 70-test
+regression suite. Running it preserves its failed build status when
+the application violates an asserted contract.
 
-CI execution has not yet been verified.
+PB-001 data-integrity tests pass because invalid input leaves balances
+and transactions unchanged. The application's internal-error response
+remains a documented validation defect.
 
-Do not configure this runner to execute untrusted pull-request code.
+## Test Data and Limitations
+
+Tests create customers, accounts and transactions.
+Core tests consume funding from the configured demo customer.
+Replenish local demo funds when needed.
+
+Use a disposable test database. Tests do not roll back all changes.
+Each hosted regression run starts with a fresh environment.
+
+Current coverage does not include every possible input combination,
+all browsers, load testing or a comprehensive security assessment.
